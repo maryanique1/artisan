@@ -1,0 +1,555 @@
+{
+  "info": {
+    "_postman_id": "fegartisan-api-v2-collection",
+    "name": "FeGArtisan API V2",
+    "description": "Collection complete de l'API FeGArtisan (V2) pour application mobile Flutter (clients + artisans).\n\n## Configuration\n1. Definir la variable `base_url` (ex: http://127.0.0.1:8000/api ou http://10.0.2.2:8000/api pour emulateur Android)\n2. Se connecter via /login — le token est automatiquement sauvegarde dans la variable `token`\n3. Les requetes authentifiees utilisent le token automatiquement\n\n## Comptes de test\n- Client : client@fegartisan.com / client1234\n- Artisan valide : artisan@fegartisan.com / artisan1234\n- Artisan en attente : marie@fegartisan.com / marie1234",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Register Client",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Jean\",\n  \"last_name\": \"Dupont\",\n  \"email\": \"client.new@fegartisan.com\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\",\n  \"ville\": \"Cotonou\",\n  \"quartier\": \"Akpakpa\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/register/client", "host": ["{{base_url}}"], "path": ["register", "client"] }
+          }
+        },
+        {
+          "name": "Register Artisan - Step 1 (infos perso)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const data = pm.response.json();",
+                  "    if (data.token) {",
+                  "        pm.collectionVariables.set('token', data.token);",
+                  "        console.log('Token Sanctum sauvegarde dans les variables');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Marie\",\n  \"last_name\": \"Agbodjan\",\n  \"email\": \"artisan.new@fegartisan.com\",\n  \"phone\": \"+229 97 11 22 33\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\",\n  \"ville\": \"Cotonou\",\n  \"quartier\": \"Fidjrossè\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/register/artisan", "host": ["{{base_url}}"], "path": ["register", "artisan"] }
+          },
+          "description": "Cree le compte utilisateur artisan et retourne un token. Le token est requis pour l'etape 2 (upload document)."
+        },
+        {
+          "name": "Register Artisan - Step 2 (verification pro)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "category_id", "value": "5", "type": "text", "description": "ID de la categorie (GET /categories)" },
+                { "key": "description", "value": "Couturière expérimentée, spécialisée en pagne africain.", "type": "text" },
+                { "key": "proof_type", "value": "preuve_experience", "type": "text", "description": "diplome | certificat | preuve_experience" },
+                { "key": "proof_document", "type": "file", "src": [], "description": "PDF/JPG/PNG, max 5MB" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/register/artisan/verification", "host": ["{{base_url}}"], "path": ["register", "artisan", "verification"] }
+          },
+          "description": "Uploade le document justificatif. Necessite le token de l'etape 1."
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    if (data.token) {",
+                  "        pm.collectionVariables.set('token', data.token);",
+                  "        console.log('Connexion OK, token sauvegarde');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"artisan@fegartisan.com\",\n  \"password\": \"artisan1234\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/login", "host": ["{{base_url}}"], "path": ["login"] }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/logout", "host": ["{{base_url}}"], "path": ["logout"] }
+          }
+        },
+        {
+          "name": "Me (profil connecte)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/me", "host": ["{{base_url}}"], "path": ["me"] }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "first_name", "value": "Nouveau Prenom", "type": "text" },
+                { "key": "last_name", "value": "Nouveau Nom", "type": "text" },
+                { "key": "phone", "value": "+229 97 00 00 99", "type": "text" },
+                { "key": "ville", "value": "Cotonou", "type": "text" },
+                { "key": "quartier", "value": "Calavi", "type": "text" },
+                { "key": "avatar", "type": "file", "src": [], "description": "Optionnel" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/me", "host": ["{{base_url}}"], "path": ["me"] }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"client@fegartisan.com\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/forgot-password", "host": ["{{base_url}}"], "path": ["forgot-password"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏷️ Categories",
+      "item": [
+        {
+          "name": "List Categories (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/categories", "host": ["{{base_url}}"], "path": ["categories"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔨 Artisans",
+      "item": [
+        {
+          "name": "Rechercher artisans",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/artisans?category_id=&ville=Cotonou&quartier=&q=",
+              "host": ["{{base_url}}"],
+              "path": ["artisans"],
+              "query": [
+                { "key": "category_id", "value": "", "description": "Filtre par categorie" },
+                { "key": "ville", "value": "Cotonou" },
+                { "key": "quartier", "value": "", "description": "Filtre par quartier" },
+                { "key": "q", "value": "", "description": "Recherche libre (nom, metier, description)" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Detail artisan",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/artisans/1", "host": ["{{base_url}}"], "path": ["artisans", "1"] }
+          }
+        },
+        {
+          "name": "Dashboard artisan",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/artisan/dashboard", "host": ["{{base_url}}"], "path": ["artisan", "dashboard"] }
+          },
+          "description": "Requiert token artisan. Retourne : views, likes_received, messages_unread, reviews_count, rating_avg, publications_count."
+        },
+        {
+          "name": "Historique de recherche",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/search-history", "host": ["{{base_url}}"], "path": ["search-history"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📝 Publications",
+      "item": [
+        {
+          "name": "Feed (liste publications)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/publications?page=1", "host": ["{{base_url}}"], "path": ["publications"], "query": [{ "key": "page", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Detail publication",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/publications/1", "host": ["{{base_url}}"], "path": ["publications", "1"] }
+          }
+        },
+        {
+          "name": "Creer publication (artisan)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "type", "value": "text", "type": "text", "description": "text | image | video" },
+                { "key": "content", "value": "Nouvelle publication de test.", "type": "text" },
+                { "key": "media", "type": "file", "src": [], "description": "Requis si type = image/video" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/artisan/publications", "host": ["{{base_url}}"], "path": ["artisan", "publications"] }
+          }
+        },
+        {
+          "name": "Modifier publication",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Contenu modifié.\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/artisan/publications/1", "host": ["{{base_url}}"], "path": ["artisan", "publications", "1"] }
+          }
+        },
+        {
+          "name": "Supprimer publication",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/artisan/publications/1", "host": ["{{base_url}}"], "path": ["artisan", "publications", "1"] }
+          }
+        },
+        {
+          "name": "Mes publications (artisan)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/artisan/publications", "host": ["{{base_url}}"], "path": ["artisan", "publications"] }
+          }
+        },
+        {
+          "name": "Toggle like publication",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/publications/1/like", "host": ["{{base_url}}"], "path": ["publications", "1", "like"] }
+          }
+        },
+        {
+          "name": "Partager publication",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/publications/1/share", "host": ["{{base_url}}"], "path": ["publications", "1", "share"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💬 Commentaires",
+      "item": [
+        {
+          "name": "Lister commentaires publication",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/publications/1/comments", "host": ["{{base_url}}"], "path": ["publications", "1", "comments"] }
+          }
+        },
+        {
+          "name": "Ajouter commentaire",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Super travail ! Je recommande.\",\n  \"parent_id\": null\n}"
+            },
+            "url": { "raw": "{{base_url}}/publications/1/comments", "host": ["{{base_url}}"], "path": ["publications", "1", "comments"] }
+          }
+        },
+        {
+          "name": "Repondre a un commentaire",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Merci !\",\n  \"parent_id\": 1\n}"
+            },
+            "url": { "raw": "{{base_url}}/publications/1/comments", "host": ["{{base_url}}"], "path": ["publications", "1", "comments"] }
+          }
+        },
+        {
+          "name": "Supprimer commentaire",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/comments/1", "host": ["{{base_url}}"], "path": ["comments", "1"] }
+          }
+        },
+        {
+          "name": "Toggle like commentaire",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/comments/1/like", "host": ["{{base_url}}"], "path": ["comments", "1", "like"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "⭐ Favoris",
+      "item": [
+        {
+          "name": "Liste favoris",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/favorites", "host": ["{{base_url}}"], "path": ["favorites"] }
+          }
+        },
+        {
+          "name": "Toggle favori",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/favorites/1", "host": ["{{base_url}}"], "path": ["favorites", "1"], "variable": [] },
+            "description": "Toggle sur ArtisanProfile ID = 1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "⭐ Avis (Reviews)",
+      "item": [
+        {
+          "name": "Lister avis artisan",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/artisans/1/reviews", "host": ["{{base_url}}"], "path": ["artisans", "1", "reviews"] }
+          }
+        },
+        {
+          "name": "Laisser un avis",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Excellent travail, artisan très professionnel.\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/artisans/1/reviews", "host": ["{{base_url}}"], "path": ["artisans", "1", "reviews"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💬 Conversations & Messages",
+      "item": [
+        {
+          "name": "Liste conversations",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/conversations", "host": ["{{base_url}}"], "path": ["conversations"] }
+          }
+        },
+        {
+          "name": "Detail conversation + messages",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/conversations/1", "host": ["{{base_url}}"], "path": ["conversations", "1"] }
+          }
+        },
+        {
+          "name": "Demarrer conversation avec artisan",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"artisan_id\": 3\n}"
+            },
+            "url": { "raw": "{{base_url}}/conversations", "host": ["{{base_url}}"], "path": ["conversations"] }
+          },
+          "description": "artisan_id = user_id de l'artisan (pas artisan_profile_id)"
+        },
+        {
+          "name": "Envoyer message texte",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Bonjour, j'aimerais obtenir un devis.\",\n  \"type\": \"text\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/conversations/1/messages", "host": ["{{base_url}}"], "path": ["conversations", "1", "messages"] }
+          }
+        },
+        {
+          "name": "Envoyer fichier/image/video",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "type", "value": "image", "type": "text", "description": "text | image | video | file" },
+                { "key": "content", "value": "Voici la photo", "type": "text" },
+                { "key": "file", "type": "file", "src": [] }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/conversations/1/messages", "host": ["{{base_url}}"], "path": ["conversations", "1", "messages"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🚩 Signalements",
+      "item": [
+        {
+          "name": "Signaler publication",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_type\": \"publication\",\n  \"target_id\": 1,\n  \"reason\": \"Contenu inapproprié\",\n  \"description\": \"Cette publication contient des propos offensants.\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/reports", "host": ["{{base_url}}"], "path": ["reports"] }
+          }
+        },
+        {
+          "name": "Signaler profil artisan",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_type\": \"profile\",\n  \"target_id\": 1,\n  \"reason\": \"Faux profil\",\n  \"description\": \"Ce profil semble frauduleux.\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/reports", "host": ["{{base_url}}"], "path": ["reports"] }
+          }
+        }
+      ]
+    }
+  ]
+}
