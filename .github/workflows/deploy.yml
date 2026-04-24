@@ -14,8 +14,8 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
+          key: ${{ secrets.SSH_KEY }}
+          port: 65002
           script: |
             set -e
 
@@ -32,6 +32,6 @@ jobs:
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
-            php artisan storage:link
+            [ -L public/storage ] || ln -s /home/u942487893/fegartisan/storage/app/public public/storage
 
             echo "Deployment successful!"
