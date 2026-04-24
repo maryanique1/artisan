@@ -168,8 +168,10 @@
         .sb-nav {
             padding: 0 14px;
             flex: 1;
-            overflow-y: auto
+            overflow-y: auto;
+            scrollbar-width: none
         }
+        .sb-nav::-webkit-scrollbar { display: none }
 
         .sb-item {
             display: flex;
