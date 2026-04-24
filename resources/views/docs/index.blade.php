@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Documentation — FeGArtisan</title>
-    <link rel="icon" type="image/jpeg" href="{{ asset('images/logo.jpeg') }}" />
+    
+    <link rel="icon" type="image/x-icon" href="{{ asset('images/favicon.ico') }}" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>

@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\ConversationController;
 use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\PublicationController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\ReviewController;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +26,7 @@ Route::post('/register/client', [AuthController::class, 'registerClient']);
 Route::post('/register/artisan', [AuthController::class, 'registerArtisanStep1']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 // Catégories (lecture publique — listes de filtres)
 Route::get('/categories', [CategoryController::class, 'index']);
@@ -75,6 +77,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Signalements
     Route::post('/reports', [ReportController::class, 'store']);
+
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::patch('/notifications/read-all', [NotificationController::class, 'markAllRead']);
+    Route::patch('/notifications/{id}/read', [NotificationController::class, 'markRead']);
+    Route::delete('/notifications/all', [NotificationController::class, 'destroyAll']);
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
 
     // Conversations & messages
     Route::get('/conversations', [ConversationController::class, 'index']);

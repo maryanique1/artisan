@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Events\NewMessageSent;
 use App\Events\NewNotification;
+use App\Listeners\PersistNotification;
 use App\Listeners\SendFcmForMessage;
 use App\Listeners\SendFcmForNotification;
 use App\Services\FirebasePushService;
@@ -21,10 +22,12 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Event::listen(NewNotification::class, SendFcmForNotification::class);
+        Event::listen(NewNotification::class, PersistNotification::class);
         Event::listen(NewMessageSent::class, SendFcmForMessage::class);
 
         ResetPassword::createUrlUsing(function ($user, string $token) {
-            return url(route('admin.password.reset', ['token' => $token, 'email' => $user->email], false));
+            $route = $user->role === 'admin' ? 'admin.password.reset' : 'password.reset';
+            return url(route($route, ['token' => $token, 'email' => $user->email], false));
         });
     }
 }

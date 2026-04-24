@@ -7,7 +7,33 @@ use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\PublicationController as AdminPublicationController;
 use App\Http\Controllers\Admin\UserController;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Route;
+
+// ── Réinitialisation mot de passe (utilisateurs mobile) ────────
+Route::get('/password/reset/{token}', function (\Illuminate\Http\Request $request, string $token) {
+    return view('auth.reset-password', [
+        'token' => $token,
+        'email' => $request->query('email', ''),
+    ]);
+})->name('password.reset');
+
+Route::post('/password/reset', function (\Illuminate\Http\Request $request) {
+    $request->validate([
+        'token'    => 'required',
+        'email'    => 'required|email',
+        'password' => 'required|confirmed|min:8',
+    ]);
+
+    $status = Password::reset(
+        $request->only('email', 'password', 'password_confirmation', 'token'),
+        fn ($user, $password) => $user->update(['password' => $password])
+    );
+
+    return $status === Password::PASSWORD_RESET
+        ? view('auth.reset-success')
+        : back()->withErrors(['email' => __($status)]);
+})->name('password.update');
 
 // ── Landing ────────────────────────────────────────────────────
 Route::get('/', function () {

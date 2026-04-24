@@ -7,7 +7,8 @@
     <title>FeGArtisan — La plateforme qui connecte artisans et clients au Bénin</title>
     <meta name="description"
         content="FeGArtisan : trouvez un artisan qualifié ou développez votre activité artisanale au Bénin. Application mobile gratuite, profils vérifiés, messagerie temps réel." />
-    <link rel="icon" type="image/jpeg" href="{{ asset('images/logo.jpeg') }}" />
+    
+    <link rel="icon" type="image/x-icon" href="{{ asset('images/favicon.ico') }}" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
@@ -104,16 +105,24 @@
         }
 
         .btn-cta {
-            background: linear-gradient(135deg, var(--accent), #D4956A);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: #fff;
-            padding: 16px 30px;
-            font-size: 16px;
-            box-shadow: 0 6px 18px rgba(193, 123, 78, .3)
+            padding: 12px 28px;
+            font-size: 14px;
+            font-weight: 700;
+            border-radius: 100px;
+            box-shadow: 0 4px 18px rgba(107, 45, 14, .35);
+            letter-spacing: .01em;
+            border: 2px solid transparent;
+            transition: all .25s
         }
 
         .btn-cta:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 26px rgba(193, 123, 78, .45)
+            background: transparent;
+            border-color: #fff;
+            color: #fff;
+            box-shadow: none;
+            transform: translateY(-1px)
         }
 
         /* ═════ HEADER ═════ */
@@ -138,7 +147,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 14px 24px;
+            padding: 14px 48px;
             max-width: 1200px;
             margin: 0 auto
         }
@@ -193,50 +202,25 @@
         .nav a.nav-cta {
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: #fff;
-            padding: 11px 20px;
-            border-radius: 8px;
-            font-weight: 600;
+            padding: 12px 28px;
+            border-radius: 100px;
+            font-weight: 700;
             font-size: 14px;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 12px rgba(107, 45, 14, .2);
-            transition: all .2s
+            gap: 9px;
+            box-shadow: 0 4px 18px rgba(107, 45, 14, .35);
+            transition: all .25s;
+            letter-spacing: .01em;
+            border: 2px solid transparent
         }
 
         .nav a.nav-cta:hover {
-            background: linear-gradient(135deg, var(--secondary), #A04A1E);
+            background: transparent;
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: none;
             transform: translateY(-1px)
-        }
-
-        .burger {
-            display: none;
-            flex-direction: column;
-            gap: 5px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 8px
-        }
-
-        .burger span {
-            width: 26px;
-            height: 3px;
-            background: var(--primary);
-            border-radius: 2px;
-            transition: all .3s
-        }
-
-        .burger.open span:nth-child(1) {
-            transform: translateY(8px) rotate(45deg)
-        }
-
-        .burger.open span:nth-child(2) {
-            opacity: 0
-        }
-
-        .burger.open span:nth-child(3) {
-            transform: translateY(-8px) rotate(-45deg)
         }
 
         /* ═════ HERO ═════ */
@@ -279,17 +263,14 @@
         .hero-badge {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            background: rgba(255, 255, 255, .1);
-            border: 1px solid rgba(255, 255, 255, .18);
-            backdrop-filter: blur(12px);
-            padding: 8px 18px;
-            border-radius: 100px;
+            gap: 10px;
             font-size: 13px;
             font-weight: 500;
-            color: #fff;
-            margin-bottom: 22px
+            color: rgba(255, 255, 255, .75);
+            margin-bottom: 22px;
+            letter-spacing: .03em
         }
+
 
         .hero h1 {
             color: #fff;
@@ -341,10 +322,16 @@
         }
 
         .hero-actions {
-            display: flex;
+            display: none;
             gap: 12px;
             flex-wrap: wrap;
             margin-bottom: 18px
+        }
+
+        @media(max-width:768px) {
+            .hero-actions {
+                display: flex
+            }
         }
 
         .hero-note {
@@ -450,36 +437,6 @@
             color: rgba(245, 237, 224, .4)
         }
 
-        /* ═════ STICKY MOBILE ═════ */
-        .sticky-cta {
-            display: none;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #fff;
-            border-top: 1px solid var(--line);
-            padding: 10px 14px;
-            z-index: 99;
-            box-shadow: 0 -4px 20px rgba(44, 26, 14, .1)
-        }
-
-        .sticky-call {
-            flex: 1;
-            padding: 12px;
-            text-align: center;
-            font-weight: 700;
-            border-radius: 10px;
-            font-size: 13px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: #fff;
-            width: 100%
-        }
-
         /* ═════ RESPONSIVE ═════ */
         @media(max-width:1024px) {
             .footer-inner {
@@ -488,31 +445,8 @@
         }
 
         @media(max-width:768px) {
-            .burger {
-                display: flex
-            }
-
             .nav {
-                display: none;
-                position: fixed;
-                top: 74px;
-                left: 0;
-                right: 0;
-                flex-direction: column;
-                background: #fff;
-                padding: 16px;
-                box-shadow: 0 10px 30px rgba(44, 26, 14, .1);
-                border-top: 1px solid var(--line)
-            }
-
-            .nav.nav-open {
-                display: flex
-            }
-
-            .nav a {
-                width: 100%;
-                padding: 14px 16px;
-                text-align: center
+                display: none
             }
 
             .hero {
@@ -534,13 +468,6 @@
                 text-align: center
             }
 
-            .sticky-cta {
-                display: flex
-            }
-
-            body {
-                padding-bottom: 70px
-            }
         }
     </style>
 </head>
@@ -558,10 +485,8 @@
                 </div>
             </a>
             <nav class="nav" id="nav">
-                <a href="{{ route('admin.login') }}" class="nav-cta"><i class="bi bi-box-arrow-in-right"></i>
-                    Connexion</a>
+                <a href="{{ route('admin.login') }}" class="nav-cta">Connexion</a>
             </nav>
-            <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
         </div>
     </header>
 
@@ -571,9 +496,7 @@
         <div class="hero-overlay"></div>
         <div class="container hero-inner">
             <div class="hero-left">
-                <div class="hero-badge" data-aos="fade-up">
-                    <i class="bi bi-geo-alt-fill" style="color:var(--accent-light)"></i> Plateforme 100% béninoise
-                </div>
+                <div class="hero-badge" data-aos="fade-up"><img src="{{ asset('images/benin.png') }}" alt="Bénin" style="width:20px;height:auto"> Plateforme 100% béninoise</div>
                 <h1 data-aos="fade-up" data-aos-delay="100">
                     L'application qui connecte <span class="hero-accent">artisans & clients</span> au Bénin.
                 </h1>
@@ -582,14 +505,12 @@
                     simple, rapide et 100% gratuite.
                 </p>
                 <div class="hero-chips" data-aos="fade-up" data-aos-delay="300">
-                    <span class="hero-chip"><i class="bi bi-patch-check-fill"></i> Profils vérifiés</span>
-                    <span class="hero-chip"><i class="bi bi-lightning-charge-fill"></i> Temps réel</span>
+                    <span class="hero-chip"><i class="bi bi-award-fill"></i> Profils vérifiés</span>
+                    <span class="hero-chip"><i class="bi bi-hourglass-split"></i> Temps réel</span>
                     <span class="hero-chip"><i class="bi bi-gift-fill"></i> 100% gratuit</span>
                 </div>
                 <div class="hero-actions" data-aos="fade-up" data-aos-delay="400">
-                    <a href="{{ route('admin.login') }}" class="btn btn-cta">
-                        <i class="bi bi-box-arrow-in-right"></i> Connexion
-                    </a>
+                    <a href="{{ route('admin.login') }}" class="btn btn-cta">Connexion</a>
                 </div>
             </div>
         </div>
@@ -618,25 +539,9 @@
         </div>
     </footer>
 
-    <!-- STICKY CTA MOBILE -->
-    <div class="sticky-cta">
-        <a href="{{ route('admin.login') }}" class="sticky-call"><i class="bi bi-box-arrow-in-right"></i> Connexion</a>
-    </div>
-
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
         AOS.init({ duration: 800, easing: 'ease-out-cubic', once: true, offset: 60 });
-
-        const burger = document.getElementById('burger');
-        const nav = document.getElementById('nav');
-        burger.addEventListener('click', () => {
-            nav.classList.toggle('nav-open');
-            burger.classList.toggle('open');
-        });
-        nav.querySelectorAll('a').forEach(l => l.addEventListener('click', () => {
-            nav.classList.remove('nav-open');
-            burger.classList.remove('open');
-        }));
 
         const header = document.querySelector('.header');
         window.addEventListener('scroll', () => {

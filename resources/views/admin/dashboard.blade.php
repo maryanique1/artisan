@@ -100,9 +100,6 @@
         <i class="bi bi-search"></i>
         <input type="text" placeholder="Rechercher..." aria-label="Rechercher">
     </div>
-    <button class="topbar-bell" aria-label="Notifications" type="button">
-        <i class="bi bi-bell"></i>
-    </button>
 </div>
 
 {{-- ═════ STAT CARDS ═════ --}}

@@ -12,7 +12,7 @@ class EnsureArtisanIsVerified
     {
         $user = $request->user();
 
-        if ($user && $user->isArtisan() && $user->artisanProfile && !$user->artisanProfile->is_verified) {
+        if ($user && $user->isArtisan() && $user->artisanProfile && $user->artisanProfile->validation_status !== 'approved') {
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Votre compte est en attente de validation par l\'administration.',

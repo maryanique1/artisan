@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Password as PasswordBroker;
 use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
@@ -202,10 +203,34 @@ class AuthController extends Controller
     {
         $request->validate(['email' => ['required', 'email']]);
 
-        // TODO: implémenter l'envoi d'email de réinitialisation
+        PasswordBroker::sendResetLink($request->only('email'));
+
         return response()->json([
             'message' => 'Si cet email existe, un lien de réinitialisation a été envoyé.',
         ]);
+    }
+
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'token'    => ['required'],
+            'email'    => ['required', 'email'],
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        $status = PasswordBroker::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                $user->update(['password' => $password]);
+                $user->tokens()->delete();
+            }
+        );
+
+        if ($status === PasswordBroker::PASSWORD_RESET) {
+            return response()->json(['message' => 'Mot de passe réinitialisé avec succès.']);
+        }
+
+        return response()->json(['message' => 'Lien invalide ou expiré.'], 422);
     }
 
     public function saveFcmToken(Request $request): JsonResponse
