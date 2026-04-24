@@ -83,7 +83,7 @@
         }
 
         .sb-brand {
-            padding: 26px 24px 20px
+            padding: 18px 24px 14px
         }
 
         .sb-brand-name {
@@ -177,8 +177,8 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 11px 14px;
-            margin-bottom: 2px;
+            padding: 9px 14px;
+            margin-bottom: 1px;
             border-radius: 10px;
             color: rgba(255, 255, 255, .65);
             font-weight: 500;
