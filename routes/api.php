@@ -44,7 +44,7 @@ Route::get('/publications/{publication}/comments', [CommentController::class, 'i
 
 // ══════════ Routes authentifiées (Sanctum) ═════════════════════
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureUserIsActive::class])->group(function () {
 
     // Auth / profil
     Route::post('/logout', [AuthController::class, 'logout']);

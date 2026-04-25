@@ -102,6 +102,23 @@ class UserController extends Controller
     {
         $user->update(['is_active' => !$user->is_active]);
 
+        if (!$user->is_active) {
+            $user->tokens()->delete();
+            broadcast(new NewNotification(
+                userId: $user->id,
+                type: 'account_suspended',
+                title: 'Compte suspendu',
+                body: 'Votre compte a été suspendu par un administrateur.',
+            ));
+        } else {
+            broadcast(new NewNotification(
+                userId: $user->id,
+                type: 'account_reactivated',
+                title: 'Compte réactivé',
+                body: 'Votre compte a été réactivé. Vous pouvez de nouveau vous connecter.',
+            ));
+        }
+
         return back()->with('success', $user->is_active ? 'Compte activé.' : 'Compte suspendu.');
     }
 
