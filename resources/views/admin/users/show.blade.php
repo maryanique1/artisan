@@ -371,7 +371,7 @@
         <div>
             @php
                 $p = $user->artisanProfile;
-                $isPending = $p && $p->isPending();
+                $isPending = $user->isArtisan() && (!$p || $p->isPending());
                 $isArtisan = $user->isArtisan();
                 $headerTitle = $isArtisan ? 'Dossier — ' . $user->name : $user->name;
                 $headerSub = $isPending ? 'En attente de validation · Soumis ' . $p->created_at->diffForHumans() : ($isArtisan ? 'Profil artisan' : ucfirst($user->role));
