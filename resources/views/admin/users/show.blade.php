@@ -555,7 +555,7 @@
                     </form>
                     @if(!$user->isAdmin())
                         <form action="{{ route('admin.users.destroy', $user) }}" method="POST" style="margin:0;margin-top:8px"
-                            onsubmit="return confirm('Supprimer définitivement cet utilisateur ?')">
+                            data-confirm="Supprimer définitivement cet utilisateur ?">
                             @csrf @method('DELETE')
                             <button class="suspend-toggle delete-btn"><i class="bi bi-trash"></i> Supprimer le compte</button>
                         </form>

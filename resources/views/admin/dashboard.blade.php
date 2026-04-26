@@ -562,8 +562,6 @@
         <div class="card-feg">
             <div class="card-head">
                 <h3>Activité récente</h3>
-                <a href="{{ route('admin.users.index') }}" style="font-size:12.5px;color:var(--accent);font-weight:600">Tout
-                    voir →</a>
             </div>
             <div class="feed">
                 @forelse($recentActivity as $act)

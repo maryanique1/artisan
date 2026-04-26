@@ -67,6 +67,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/profile', [AdminProfileController::class, 'show'])->name('profile');
         Route::post('/profile', [AdminProfileController::class, 'update'])->name('profile.update');
         Route::post('/profile/password', [AdminProfileController::class, 'updatePassword'])->name('profile.password');
+        Route::delete('/profile', [AdminProfileController::class, 'destroy'])->name('profile.destroy');
 
         // Gestion utilisateurs
         Route::get('/users', [UserController::class, 'index'])->name('users.index');

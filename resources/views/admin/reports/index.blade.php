@@ -178,7 +178,7 @@
                                 <button class="act-btn act-warn"><i class="bi bi-slash-circle"></i> Suspendre</button>
                             </form>
                         @elseif($r->target_type === 'publication' && $target)
-                            <form action="{{ route('admin.publications.destroy', $target) }}" method="POST" style="margin:0" onsubmit="return confirm('Supprimer cette publication ?')">
+                            <form action="{{ route('admin.publications.destroy', $target) }}" method="POST" style="margin:0" data-confirm="Supprimer cette publication ?">
                                 @csrf @method('DELETE')
                                 <button class="act-btn act-danger"><i class="bi bi-trash"></i> Supprimer</button>
                             </form>

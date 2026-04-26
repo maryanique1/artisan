@@ -79,4 +79,30 @@ class ProfileController extends Controller
 
         return back()->with('success', 'Mot de passe modifié.');
     }
+
+    public function destroy(Request $request)
+    {
+        $request->validate([
+            'confirm_password' => ['required'],
+        ]);
+
+        $user = Auth::user();
+
+        if (!Hash::check($request->confirm_password, $user->password)) {
+            return back()->withErrors(['confirm_password' => 'Mot de passe incorrect.'])->withFragment('delete-account');
+        }
+
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        if ($user->avatar) {
+            Storage::disk('public')->delete($user->avatar);
+        }
+
+        $user->tokens()->delete();
+        $user->delete();
+
+        return redirect()->route('admin.login')->with('success', 'Votre compte a été supprimé.');
+    }
 }

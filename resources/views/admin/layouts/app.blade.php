@@ -1029,6 +1029,50 @@
         });
     </script>
     @stack('scripts')
+
+    {{-- Modal de confirmation global --}}
+    <div id="feg-confirm-overlay" style="display:none;position:fixed;inset:0;background:rgba(44,16,6,.45);z-index:9999;align-items:center;justify-content:center">
+        <div style="background:#fff;border-radius:20px;padding:36px 40px;max-width:420px;width:90%;box-shadow:0 24px 64px rgba(44,16,6,.18);text-align:center">
+            <div style="width:60px;height:60px;border-radius:50%;background:#FEF2F2;border:2px solid #FECACA;display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 20px">⚠️</div>
+            <h3 style="font-size:1.1rem;font-weight:800;color:#4A3424;margin:0 0 10px" id="feg-confirm-title">Confirmer l'action</h3>
+            <p style="font-size:.9rem;color:#9A7A64;margin:0 0 28px;line-height:1.6" id="feg-confirm-msg"></p>
+            <div style="display:flex;gap:12px;justify-content:center">
+                <button onclick="fegConfirmCancel()" style="flex:1;padding:11px 20px;border-radius:10px;border:1.5px solid #E8D5C0;background:#fff;color:#6B2D0E;font-weight:600;font-size:.9rem;cursor:pointer">Annuler</button>
+                <button id="feg-confirm-ok" style="flex:1;padding:11px 20px;border-radius:10px;border:none;background:linear-gradient(135deg,#DC2626,#B91C1C);color:#fff;font-weight:700;font-size:.9rem;cursor:pointer">Confirmer</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        let _fegConfirmForm = null;
+        const _overlay = document.getElementById('feg-confirm-overlay');
+
+        function fegConfirmShow(msg, form, title) {
+            _fegConfirmForm = form;
+            document.getElementById('feg-confirm-msg').textContent = msg;
+            document.getElementById('feg-confirm-title').textContent = title || 'Confirmer l\'action';
+            _overlay.style.display = 'flex';
+        }
+        function fegConfirmCancel() {
+            _overlay.style.display = 'none';
+            _fegConfirmForm = null;
+        }
+        document.getElementById('feg-confirm-ok').addEventListener('click', () => {
+            _overlay.style.display = 'none';
+            if (_fegConfirmForm) {
+                _fegConfirmForm.removeAttribute('data-confirm');
+                _fegConfirmForm.submit();
+            }
+        });
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            const msg = form.getAttribute('data-confirm');
+            if (msg) {
+                e.preventDefault();
+                fegConfirmShow(msg, form, form.getAttribute('data-confirm-title'));
+            }
+        });
+        _overlay.addEventListener('click', (e) => { if (e.target === _overlay) fegConfirmCancel(); });
+    </script>
 </body>
 
 </html>

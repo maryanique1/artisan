@@ -283,6 +283,32 @@
                 @endif
             </div>
         </div>
+
+        {{-- Suppression du compte --}}
+        <div class="card-feg" id="delete-account" style="border-color:#FECACA">
+            <div class="card-head" style="background:#FEF2F2">
+                <h3 style="color:#991B1B">⚠️ Supprimer mon compte</h3>
+            </div>
+            <div class="card-body">
+                <p style="color:#7F1D1D;font-size:13.5px;margin-bottom:16px;line-height:1.6">
+                    Cette action est <strong>irréversible</strong>. Votre compte sera définitivement supprimé et vous serez déconnecté immédiatement.
+                </p>
+                <form action="{{ route('admin.profile.destroy') }}" method="POST"
+                      data-confirm="Cette action est irréversible. Votre compte sera définitivement supprimé."
+                      data-confirm-title="Supprimer mon compte">
+                    @csrf
+                    @method('DELETE')
+                    <div class="field {{ $errors->has('confirm_password') ? 'err' : '' }}" style="max-width:360px;margin-bottom:12px">
+                        <label>Confirmez votre mot de passe</label>
+                        <input type="password" name="confirm_password" placeholder="Votre mot de passe actuel" required>
+                        @error('confirm_password')<div class="hint">{{ $message }}</div>@enderror
+                    </div>
+                    <button type="submit" class="btn-ghost" style="border-color:#EF4444;color:#DC2626;font-weight:700">
+                        <i class="bi bi-trash3-fill"></i> Supprimer définitivement mon compte
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 
 </div>

@@ -187,7 +187,7 @@
                         <button type="button" class="act-btn act-view" data-bs-toggle="modal" data-bs-target="#viewPub{{ $p->id }}">
                             <i class="bi bi-eye"></i> Voir
                         </button>
-                        <form action="{{ route('admin.publications.destroy', $p) }}" method="POST" style="margin:0" onsubmit="return confirm('Supprimer cette publication ?')">
+                        <form action="{{ route('admin.publications.destroy', $p) }}" method="POST" style="margin:0" data-confirm="Supprimer cette publication ?">
                             @csrf @method('DELETE')
                             <button class="act-btn act-danger"><i class="bi bi-trash"></i> Supprimer</button>
                         </form>
