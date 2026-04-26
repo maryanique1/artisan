@@ -864,8 +864,8 @@
 
         $navCounts = [
             'clients' => \App\Models\User::where('role', 'client')->where('is_active', true)->count(),
-            'artisans' => \App\Models\User::where('role', 'artisan')->where('is_active', true)->count(),
-            'pending' => \App\Models\ArtisanProfile::where('validation_status', 'pending')->count(),
+            'artisans' => \App\Models\User::where('role', 'artisan')->where('is_active', true)->whereHas('artisanProfile', fn($q) => $q->where('validation_status', 'approved'))->count(),
+            'pending' => \App\Models\ArtisanProfile::where('validation_status', 'pending')->count() + \App\Models\User::where('role', 'artisan')->whereDoesntHave('artisanProfile')->count(),
             'reports' => \App\Models\Report::where('status', 'pending')->count(),
         ];
 

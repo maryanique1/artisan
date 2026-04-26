@@ -32,7 +32,15 @@ class UserController extends Controller
         }
 
         if ($validation) {
-            $query->whereHas('artisanProfile', fn($q) => $q->where('validation_status', $validation));
+            if ($validation === 'pending') {
+                // Inclure aussi les artisans qui n'ont pas encore soumis leur dossier (étape 1 faite, étape 2 non)
+                $query->where('role', 'artisan')->where(function ($q) {
+                    $q->whereHas('artisanProfile', fn($p) => $p->where('validation_status', 'pending'))
+                      ->orWhereDoesntHave('artisanProfile');
+                });
+            } else {
+                $query->whereHas('artisanProfile', fn($q) => $q->where('validation_status', $validation));
+            }
         }
 
         if ($request->filled('status')) {
