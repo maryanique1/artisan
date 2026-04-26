@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\PublicationController as AdminPublicationController;
+use App\Http\Controllers\Admin\AdministratorController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Route;
@@ -89,5 +90,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Signalements
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
         Route::put('/reports/{report}', [ReportController::class, 'update'])->name('reports.update');
+
+        // Gestion administrateurs
+        Route::get('/administrators', [AdministratorController::class, 'index'])->name('administrators.index');
+        Route::post('/administrators', [AdministratorController::class, 'store'])->name('administrators.store');
+        Route::patch('/administrators/{admin}/toggle-active', [AdministratorController::class, 'toggleActive'])->name('administrators.toggle-active');
+        Route::patch('/administrators/{admin}/toggle-manage', [AdministratorController::class, 'toggleManageAdmins'])->name('administrators.toggle-manage');
     });
 });

@@ -37,7 +37,7 @@
               <div style="text-align:center;margin-bottom:32px">
                 <div
                   style="display:inline-block;background:#f0faf4;border:2px solid #a3d9b5;border-radius:50%;width:72px;height:72px;line-height:72px;font-size:2rem;text-align:center">
-                  ✅</div>
+                  </div>
               </div>
 
               <h1 style="font-size:1.5rem;font-weight:800;color:#6B2D0E;margin:0 0 16px;text-align:center">

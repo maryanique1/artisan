@@ -18,7 +18,7 @@ class ArtisanApprovedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '✅ Votre compte artisan FeGArtisan a été validé !',
+            subject: ' Votre compte artisan FeGArtisan a été validé !',
         );
     }
 

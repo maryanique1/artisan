@@ -928,6 +928,13 @@
                 <i class="bi bi-tags-fill"></i>
                 <span class="label">Catégories</span>
             </a>
+            @if($currentUser->can_manage_admins)
+            <a href="{{ route('admin.administrators.index') }}"
+                class="sb-item {{ request()->routeIs('admin.administrators.*') ? 'active' : '' }}">
+                <i class="bi bi-shield-lock-fill"></i>
+                <span class="label">Administrateurs</span>
+            </a>
+            @endif
         </nav>
 
         <div class="sb-footer">

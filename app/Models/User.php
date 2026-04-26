@@ -19,7 +19,7 @@ class User extends Authenticatable
         'first_name', 'last_name', 'name',
         'email', 'phone', 'role', 'avatar',
         'ville', 'quartier',
-        'is_active', 'password',
+        'is_active', 'can_manage_admins', 'password',
         'fcm_token', 'fcm_platform', 'fcm_token_updated_at',
     ];
 
@@ -31,6 +31,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'can_manage_admins' => 'boolean',
             'fcm_token_updated_at' => 'datetime',
         ];
     }
