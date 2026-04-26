@@ -116,6 +116,16 @@ class ArtisanController extends Controller
             return response()->json(['message' => 'Profil artisan introuvable.'], 404);
         }
 
+        $now = now();
+        $weekAgo = $now->copy()->subDays(7);
+        $twoWeeksAgo = $now->copy()->subDays(14);
+
+        $reviewsThisWeek = $profile->reviews()->where('created_at', '>=', $weekAgo)->count();
+        $reviewsLastWeek = $profile->reviews()->whereBetween('created_at', [$twoWeeksAgo, $weekAgo])->count();
+
+        $pubsThisWeek = $profile->publications()->where('created_at', '>=', $weekAgo)->count();
+        $pubsLastWeek = $profile->publications()->whereBetween('created_at', [$twoWeeksAgo, $weekAgo])->count();
+
         return response()->json([
             'profile' => $profile->load('category'),
             'stats' => [
@@ -127,6 +137,12 @@ class ArtisanController extends Controller
                 'reviews_count' => $profile->rating_count,
                 'rating_avg' => $profile->rating_avg,
                 'publications_count' => $profile->publications()->count(),
+            ],
+            'deltas' => [
+                'reviews_this_week' => $reviewsThisWeek,
+                'reviews_delta' => $reviewsThisWeek - $reviewsLastWeek,
+                'publications_this_week' => $pubsThisWeek,
+                'publications_delta' => $pubsThisWeek - $pubsLastWeek,
             ],
         ]);
     }
