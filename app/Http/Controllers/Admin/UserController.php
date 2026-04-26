@@ -25,6 +25,10 @@ class UserController extends Controller
 
         if ($role) {
             $query->where('role', $role);
+            // L'onglet "Artisans" n'affiche que les approuvés — les pending ont leur propre onglet
+            if ($role === 'artisan' && !$validation) {
+                $query->whereHas('artisanProfile', fn($q) => $q->where('validation_status', 'approved'));
+            }
         }
 
         if ($validation) {
