@@ -806,20 +806,24 @@
 
                             @if($pageMode === 'pending')
                                 <td data-label="Catégorie">{{ $p?->category?->name ?? $p?->metier ?? '—' }}</td>
-                                <td data-label="Zone">{{ $p->ville }}@if($p->quartier) · {{ $p->quartier }}@endif</td>
+                                <td data-label="Zone">{{ $p?->ville ?? '—' }}@if($p?->quartier) · {{ $p->quartier }}@endif</td>
                                 <td data-label="Document">
-                                    @if($p->proof_type)
+                                    @if($p?->proof_type)
                                         <span class="st-chip warn">{{ ucfirst(str_replace('_', ' ', $p->proof_type)) }}</span>
-                                    @else — @endif
+                                    @else <span style="color:var(--muted);font-size:.8rem">Dossier non soumis</span> @endif
                                 </td>
                                 <td data-label="Soumis le" style="color:var(--muted)">
-                                    @php
-                                        $c = $p->created_at;
-                                        $label = $c->isToday() ? "Aujourd'hui · " . $c->format('H\\hi')
-                                            : ($c->isYesterday() ? "Hier · " . $c->format('H\\hi')
-                                                : "Il y a " . (int) $c->diffInDays(now()) . "j · " . $c->format('H\\hi'));
-                                    @endphp
-                                    {{ $label }}
+                                    @if($p)
+                                        @php
+                                            $c = $p->created_at;
+                                            $label = $c->isToday() ? "Aujourd'hui · " . $c->format('H\\hi')
+                                                : ($c->isYesterday() ? "Hier · " . $c->format('H\\hi')
+                                                    : "Il y a " . (int) $c->diffInDays(now()) . "j · " . $c->format('H\\hi'));
+                                        @endphp
+                                        {{ $label }}
+                                    @else
+                                        <span style="font-size:.8rem">—</span>
+                                    @endif
                                 </td>
                                 <td data-label="Actions rapides" onclick="event.stopPropagation()">
                                     <div style="display:flex;gap:6px;flex-wrap:wrap">
