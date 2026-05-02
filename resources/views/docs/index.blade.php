@@ -136,7 +136,7 @@
         <li class="nav-section">Services</li>
         <li><a href="#storage"><i class="bi bi-folder"></i> 15. Storage & fichiers</a></li>
         <li><a href="#firebase"><i class="bi bi-fire"></i> 16. Firebase (FCM)</a></li>
-        <li><a href="#reverb"><i class="bi bi-broadcast"></i> 17. WebSockets Reverb</a></li>
+        <li><a href="#reverb"><i class="bi bi-chat-dots"></i> 17. Messagerie temps réel</a></li>
 
         <li class="nav-section">Lancer & tester</li>
         <li><a href="#run"><i class="bi bi-play-circle"></i> 18. Démarrer les serveurs</a></li>
@@ -373,16 +373,6 @@ extension=sodium</div>
 
     <div class="step-card">
         <div class="step-number">2</div>
-        <h4>Laravel Reverb — WebSockets temps réel</h4>
-<div class="cmd-block"><span class="prompt">$</span> composer require laravel/reverb</div>
-        <p>Initialisez-le (génère les clés dans <code>.env</code> et crée <code>config/reverb.php</code>) :</p>
-<div class="cmd-block"><span class="prompt">$</span> php artisan reverb:install
-
-<span class="comment">→ Il posera peut-être des questions, acceptez les valeurs par défaut.</span></div>
-    </div>
-
-    <div class="step-card">
-        <div class="step-number">3</div>
         <h4>Firebase PHP — notifications push FCM</h4>
         <p>On utilise la version <strong>7.x</strong> car la 8.x exige PHP 8.3+. Si votre PHP est 8.2, utilisez :</p>
 <div class="cmd-block"><span class="prompt">$</span> composer require "kreait/firebase-php:^7.16"</div>
@@ -427,16 +417,11 @@ extension=sodium</div>
 <div class="cmd-block"><span class="k">SESSION_DRIVER</span>=database
 <span class="k">QUEUE_CONNECTION</span>=database
 <span class="k">CACHE_STORE</span>=database
-<span class="k">BROADCAST_CONNECTION</span>=reverb</div>
-
-    <h3>Laravel Reverb (WebSockets)</h3>
-    <p>Ces valeurs ont été générées automatiquement par <code>reverb:install</code>. Vérifiez qu'elles sont présentes :</p>
-<div class="cmd-block"><span class="k">REVERB_APP_ID</span>=<span class="s">votre-id-genere</span>
-<span class="k">REVERB_APP_KEY</span>=<span class="s">votre-key-generee</span>
-<span class="k">REVERB_APP_SECRET</span>=<span class="s">votre-secret-genere</span>
-<span class="k">REVERB_HOST</span>="localhost"
-<span class="k">REVERB_PORT</span>=8080
-<span class="k">REVERB_SCHEME</span>=http</div>
+<span class="k">BROADCAST_CONNECTION</span>=log</div>
+    <div class="doc-info">
+        <i class="bi bi-info-circle"></i>
+        <div>Sur Hostinger mutualisé, <code>BROADCAST_CONNECTION=log</code> désactive les WebSockets (Reverb nécessite un processus persistant non disponible sur mutualisé). La messagerie fonctionne via <strong>polling HTTP + FCM</strong> — voir section 17.</div>
+    </div>
 
     <h3>Firebase FCM</h3>
 <div class="cmd-block"><span class="k">FIREBASE_CREDENTIALS</span>=storage/firebase/service-account.json
@@ -1099,25 +1084,40 @@ storage/firebase/service-account.json</div>
 
 {{-- ══════════════════════════════════════════════════════════════════════════ --}}
 <div class="doc-section" id="reverb">
-    <h2><i class="bi bi-broadcast"></i> 17. WebSockets temps réel (Reverb)</h2>
-    <p>Reverb permet d'envoyer des données instantanément (sans que Flutter rafraîchisse) : messages de chat, notifications en temps réel.</p>
+    <h2><i class="bi bi-chat-dots"></i> 17. Messagerie temps réel</h2>
+    <p>L'app est hébergée sur <strong>Hostinger mutualisé</strong> — les WebSockets persistants (Reverb) ne sont pas disponibles. La messagerie fonctionne avec deux mécanismes complémentaires :</p>
 
-    <h3>Vérifier la config dans .env</h3>
-<div class="cmd-block"><span class="k">BROADCAST_CONNECTION</span>=reverb
-<span class="k">REVERB_HOST</span>="localhost"
-<span class="k">REVERB_PORT</span>=8080</div>
+    <table class="doc-table">
+        <tr><th>Scénario</th><th>Mécanisme</th><th>Délai</th></tr>
+        <tr><td>Conversation ouverte (app au premier plan)</td><td>Polling HTTP toutes les 3 s</td><td>≤ 3 s</td></tr>
+        <tr><td>App en arrière-plan / écran verrouillé</td><td>FCM push notification</td><td>~1 s</td></tr>
+    </table>
 
-    <h3>Lancer le serveur Reverb</h3>
-<div class="cmd-block"><span class="prompt">$</span> php artisan reverb:start
-<span class="comment">→ Starting server on 0.0.0.0:8080...</span></div>
-    <p>Flutter écoute sur ce port pour recevoir les messages en temps réel. Laissez ce terminal ouvert pendant le développement.</p>
+    <h3><i class="bi bi-arrow-repeat"></i> Polling Flutter (conversation ouverte)</h3>
+    <p>Flutter appelle cet endpoint toutes les 3 secondes pour récupérer uniquement les <em>nouveaux</em> messages :</p>
+<div class="cmd-block"><span class="comment"># Endpoint de polling — ne retourne que les messages avec id > after</span>
+GET /api/conversations/{id}/messages?after={last_message_id}
 
-    <h3>Comment un événement est diffusé</h3>
-<div class="cmd-block"><span class="comment"># Dans un controller, après avoir sauvegardé un message :</span>
-$message = Message::create([...]);
+<span class="comment"># Réponse si rien de nouveau (requête légère, pas de JOIN) :</span>
+{ "messages": [] }
 
-<span class="comment"># On déclenche l'événement → Reverb le diffuse vers Flutter</span>
-event(new NewMessageSent($message));</div>
+<span class="comment"># Réponse si nouveau message :</span>
+{ "messages": [ { "id": 42, "content": "Bonjour", "sender": {...}, ... } ] }</div>
+
+    <div class="doc-info">
+        <i class="bi bi-lightbulb"></i>
+        <div>Flutter doit annuler le timer dans <code>dispose()</code> et le mettre en pause quand <code>AppLifecycleState.paused</code> — FCM prend le relais dès que l'app est en fond.</div>
+    </div>
+
+    <h3><i class="bi bi-bell"></i> FCM (app en arrière-plan)</h3>
+    <p>Quand un message est envoyé, Laravel appelle automatiquement <code>FirebasePushService::sendToUser()</code>. Flutter reçoit le payload :</p>
+<div class="cmd-block">{
+  "type": "new_message",
+  "conversation_id": "42"
+}
+<span class="comment">→ Au tap : naviguer vers ConversationScreen(id: conversation_id)</span></div>
+
+    <p>La notification est également persistée en base et visible via <code>GET /api/notifications</code>.</p>
 </div>
 
 {{-- ══════════════════════════════════════════════════════════════════════════ --}}
@@ -1128,19 +1128,14 @@ event(new NewMessageSent($message));</div>
     <table class="doc-table">
         <tr><th>Terminal</th><th>Commande</th><th>Rôle</th><th>Port</th></tr>
         <tr><td><strong>1</strong></td><td><code>php artisan serve</code></td><td>Serveur HTTP Laravel (site + API)</td><td>8000</td></tr>
-        <tr><td><strong>2</strong></td><td><code>php artisan reverb:start</code></td><td>Serveur WebSocket (messages temps réel)</td><td>8080</td></tr>
-        <tr><td><strong>3</strong></td><td><code>php artisan queue:work</code></td><td>Traite les jobs en arrière-plan (push FCM, emails)</td><td>—</td></tr>
+        <tr><td><strong>2</strong></td><td><code>php artisan queue:work</code></td><td>Traite les jobs en arrière-plan (push FCM, emails)</td><td>—</td></tr>
     </table>
 
 <div class="cmd-block"><span class="comment"># Terminal 1 — le plus important, toujours ouvert</span>
 <span class="prompt">$</span> php artisan serve
 <span class="success">→ Server running on [http://127.0.0.1:8000]</span>
 
-<span class="comment"># Terminal 2 — pour les messages temps réel</span>
-<span class="prompt">$</span> php artisan reverb:start
-<span class="success">→ Starting server on 0.0.0.0:8080...</span>
-
-<span class="comment"># Terminal 3 — pour les notifications push FCM</span>
+<span class="comment"># Terminal 2 — pour les notifications push FCM et emails</span>
 <span class="prompt">$</span> php artisan queue:work
 <span class="success">→ Processing jobs from the [default] queue...</span></div>
 
@@ -1280,19 +1275,26 @@ const String baseUrl = 'http://10.0.2.2:8000/api';
     <h2><i class="bi bi-signpost-2"></i> 22. Toutes les routes API</h2>
     <p>Base URL en local : <code>http://127.0.0.1:8000/api</code></p>
 
+    <div class="doc-info">
+        <i class="bi bi-shield-lock"></i>
+        <div>Les routes <strong>login</strong>, <strong>register</strong> et <strong>forgot-password</strong> sont protégées par rate limiting (<code>throttle</code>) pour éviter les attaques brute-force.</div>
+    </div>
+
     <h3>Routes publiques (sans token)</h3>
     <table class="doc-table route-table">
         <tr><th>Méthode + Endpoint</th><th>Rôle</th></tr>
-        <tr><td><span class="method post">POST</span> /register/client</td><td>Inscription client (étape unique)</td></tr>
-        <tr><td><span class="method post">POST</span> /register/artisan</td><td>Inscription artisan — étape 1 (infos de base)</td></tr>
-        <tr><td><span class="method post">POST</span> /login</td><td>Connexion → retourne un token</td></tr>
-        <tr><td><span class="method post">POST</span> /forgot-password</td><td>Demande de reset mot de passe</td></tr>
+        <tr><td><span class="method post">POST</span> /register/client</td><td>Inscription client (étape unique) — throttle : 10/min</td></tr>
+        <tr><td><span class="method post">POST</span> /register/artisan</td><td>Inscription artisan — étape 1 (infos de base) — throttle : 10/min</td></tr>
+        <tr><td><span class="method post">POST</span> /login</td><td>Connexion → retourne un token — throttle : 5/min</td></tr>
+        <tr><td><span class="method post">POST</span> /forgot-password</td><td>Demande de reset mot de passe — throttle : 3/min</td></tr>
+        <tr><td><span class="method post">POST</span> /reset-password</td><td>Réinitialiser le mot de passe avec le token reçu par email</td></tr>
         <tr><td><span class="method get">GET</span> /categories</td><td>Liste des catégories de métiers</td></tr>
-        <tr><td><span class="method get">GET</span> /artisans</td><td>Recherche artisans (filtres : ville, catégorie)</td></tr>
-        <tr><td><span class="method get">GET</span> /artisans/{id}</td><td>Fiche détaillée d'un artisan</td></tr>
+        <tr><td><span class="method get">GET</span> /artisans</td><td>Recherche artisans (filtres : ville, catégorie, q) — masque les profils avec <code>profile_visible=false</code></td></tr>
+        <tr><td><span class="method get">GET</span> /artisans/{id}</td><td>Fiche détaillée d'un artisan — 404 si <code>profile_visible=false</code></td></tr>
         <tr><td><span class="method get">GET</span> /artisans/{id}/reviews</td><td>Avis laissés sur un artisan</td></tr>
         <tr><td><span class="method get">GET</span> /publications</td><td>Feed de publications</td></tr>
         <tr><td><span class="method get">GET</span> /publications/{id}</td><td>Détail d'une publication</td></tr>
+        <tr><td><span class="method get">GET</span> /publications/{id}/comments</td><td>Commentaires d'une publication (paginés, avec réponses)</td></tr>
     </table>
 
     <h3>Routes authentifiées (header <code>Authorization: Bearer &lt;token&gt;</code>)</h3>
@@ -1300,26 +1302,41 @@ const String baseUrl = 'http://10.0.2.2:8000/api';
         <tr><th>Méthode + Endpoint</th><th>Rôle</th></tr>
         <tr><td><span class="method get">GET</span> /me</td><td>Profil de l'utilisateur connecté</td></tr>
         <tr><td><span class="method post">POST</span> /me</td><td>Mettre à jour son profil (avatar, ville…)</td></tr>
+        <tr><td><span class="method get">GET</span> /me/privacy</td><td>Lire le réglage de confidentialité (<code>profile_visible</code>)</td></tr>
+        <tr><td><span class="method put">PUT</span> /me/privacy</td><td>Changer la visibilité du profil dans la recherche</td></tr>
         <tr><td><span class="method post">POST</span> /logout</td><td>Déconnexion (révoque le token courant)</td></tr>
         <tr><td><span class="method post">POST</span> /me/fcm-token</td><td>Enregistrer le token FCM du téléphone</td></tr>
         <tr><td><span class="method delete">DELETE</span> /me/fcm-token</td><td>Supprimer le token (au logout Flutter)</td></tr>
         <tr><td><span class="method post">POST</span> /register/artisan/verification</td><td>Artisan — étape 2 : upload du justificatif</td></tr>
         <tr><td><span class="method post">POST</span> /publications/{id}/like</td><td>Liker ou déliker une publication</td></tr>
-        <tr><td><span class="method post">POST</span> /publications/{id}/comments</td><td>Commenter une publication</td></tr>
+        <tr><td><span class="method post">POST</span> /publications/{id}/share</td><td>Incrémenter le compteur de partages</td></tr>
+        <tr><td><span class="method post">POST</span> /publications/{id}/comments</td><td>Commenter une publication (ou répondre : <code>parent_id</code>)</td></tr>
+        <tr><td><span class="method delete">DELETE</span> /comments/{id}</td><td>Supprimer son commentaire</td></tr>
+        <tr><td><span class="method post">POST</span> /comments/{id}/like</td><td>Liker ou déliker un commentaire</td></tr>
+        <tr><td><span class="method post">POST</span> /artisans/{id}/reviews</td><td>Laisser ou mettre à jour un avis (note + commentaire)</td></tr>
         <tr><td><span class="method post">POST</span> /favorites/{artisanId}</td><td>Ajouter/retirer un artisan des favoris</td></tr>
         <tr><td><span class="method get">GET</span> /favorites</td><td>Mes artisans favoris</td></tr>
         <tr><td><span class="method post">POST</span> /reports</td><td>Signaler un contenu ou profil</td></tr>
-        <tr><td><span class="method get">GET</span> /conversations</td><td>Mes conversations</td></tr>
-        <tr><td><span class="method post">POST</span> /conversations</td><td>Démarrer ou récupérer une conversation</td></tr>
-        <tr><td><span class="method post">POST</span> /conversations/{id}/messages</td><td>Envoyer un message</td></tr>
+        <tr><td><span class="method get">GET</span> /search-history</td><td>Historique de recherche (dédoublonné)</td></tr>
+        <tr><td><span class="method get">GET</span> /notifications</td><td>Mes notifications (paginées)</td></tr>
+        <tr><td><span class="method get">GET</span> /notifications/unread-count</td><td>Nombre de notifications non lues</td></tr>
+        <tr><td><span class="method patch">PATCH</span> /notifications/read-all</td><td>Marquer toutes les notifications comme lues</td></tr>
+        <tr><td><span class="method patch">PATCH</span> /notifications/{id}/read</td><td>Marquer une notification comme lue</td></tr>
+        <tr><td><span class="method delete">DELETE</span> /notifications/all</td><td>Supprimer toutes ses notifications</td></tr>
+        <tr><td><span class="method delete">DELETE</span> /notifications/{id}</td><td>Supprimer une notification</td></tr>
+        <tr><td><span class="method get">GET</span> /conversations</td><td>Mes conversations (avec compteur non lus)</td></tr>
+        <tr><td><span class="method post">POST</span> /conversations</td><td>Démarrer ou récupérer une conversation (<code>artisan_id</code>)</td></tr>
+        <tr><td><span class="method get">GET</span> /conversations/{id}</td><td>Historique d'une conversation (50 messages paginés)</td></tr>
+        <tr><td><span class="method post">POST</span> /conversations/{id}/messages</td><td>Envoyer un message (texte ou fichier)</td></tr>
+        <tr><td><span class="method get">GET</span> /conversations/{id}/messages?after={lastId}</td><td>⚡ Polling — nouveaux messages depuis <code>lastId</code> (appeler toutes les 3 s)</td></tr>
     </table>
 
     <h3>Routes artisan seulement (role = artisan)</h3>
     <table class="doc-table route-table">
         <tr><th>Méthode + Endpoint</th><th>Rôle</th></tr>
-        <tr><td><span class="method get">GET</span> /artisan/dashboard</td><td>Stats artisan (vues profil, likes, avis)</td></tr>
+        <tr><td><span class="method get">GET</span> /artisan/dashboard</td><td>Stats artisan (vues, likes, avis, messages non lus, deltas hebdo)</td></tr>
         <tr><td><span class="method get">GET</span> /artisan/publications</td><td>Mes publications</td></tr>
-        <tr><td><span class="method post">POST</span> /artisan/publications</td><td>Créer une publication</td></tr>
+        <tr><td><span class="method post">POST</span> /artisan/publications</td><td>Créer une publication (texte / image / vidéo)</td></tr>
         <tr><td><span class="method put">PUT</span> /artisan/publications/{id}</td><td>Modifier une publication</td></tr>
         <tr><td><span class="method delete">DELETE</span> /artisan/publications/{id}</td><td>Supprimer une publication</td></tr>
     </table>
@@ -1351,7 +1368,6 @@ const String baseUrl = 'http://10.0.2.2:8000/api';
     <h3>Serveurs</h3>
 <div class="cmd-block"><span class="prompt">$</span> php artisan serve                       <span class="comment"># HTTP sur 8000</span>
 <span class="prompt">$</span> php artisan serve --port=8001           <span class="comment"># autre port</span>
-<span class="prompt">$</span> php artisan reverb:start                <span class="comment"># WebSocket sur 8080</span>
 <span class="prompt">$</span> php artisan queue:work                  <span class="comment"># worker jobs (FCM, emails)</span>
 <span class="prompt">$</span> php artisan queue:work --tries=3        <span class="comment"># avec retry automatique</span></div>
 

@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Events\NewMessageSent;
-use App\Events\NewNotification;
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
+use App\Services\FirebasePushService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ConversationController extends Controller
 {
@@ -70,7 +71,7 @@ class ConversationController extends Controller
     public function startOrGet(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'artisan_id' => ['required', 'exists:users,id'],
+            'artisan_id' => ['required', 'exists:users,id,role,artisan'],
         ]);
 
         $user = $request->user();
@@ -122,22 +123,78 @@ class ConversationController extends Controller
 
         $message->load('sender:id,first_name,last_name,avatar');
 
-        // Broadcast temps réel dans la conversation
-        broadcast(new NewMessageSent($message))->toOthers();
-
-        // Notif push au destinataire
         $recipientId = $conversation->client_id === $user->id
             ? $conversation->artisan_id
             : $conversation->client_id;
 
-        broadcast(new NewNotification(
+        $body = $message->type === 'text'
+            ? Str::limit($message->content, 80)
+            : '📎 Pièce jointe';
+
+        // Push FCM (app en arrière-plan / écran verrouillé)
+        app(FirebasePushService::class)->sendToUser(
             userId: $recipientId,
-            type: 'new_message',
-            title: $user->name,
-            body: $message->type === 'text' ? \Illuminate\Support\Str::limit($message->content, 80) : '📎 Pièce jointe',
-            data: ['conversation_id' => $conversation->id, 'message_id' => $message->id],
-        ));
+            title: $user->first_name . ' ' . $user->last_name,
+            body: $body,
+            data: ['conversation_id' => (string) $conversation->id, 'type' => 'new_message'],
+        );
+
+        // Persister la notification en base (visible dans GET /api/notifications)
+        DB::table('notifications')->insert([
+            'id'              => Str::uuid()->toString(),
+            'type'            => 'new_message',
+            'notifiable_type' => 'App\\Models\\User',
+            'notifiable_id'   => $recipientId,
+            'data'            => json_encode([
+                'title' => $user->first_name . ' ' . $user->last_name,
+                'body'  => $body,
+                'extra' => ['conversation_id' => $conversation->id, 'message_id' => $message->id],
+            ]),
+            'read_at'    => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         return response()->json(['message' => $message], 201);
+    }
+
+    /**
+     * Nouveaux messages depuis un ID donné (polling Flutter)
+     * GET /api/conversations/{conversation}/messages?after={last_message_id}
+     */
+    public function newMessages(Conversation $conversation, Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($conversation->client_id !== $user->id && $conversation->artisan_id !== $user->id) {
+            return response()->json(['message' => 'Non autorisé.'], 403);
+        }
+
+        $after = $request->integer('after', 0);
+
+        // Vérification légère : existe-t-il un message plus récent ? (1 seule colonne, pas de JOIN)
+        $hasNew = $conversation->messages()
+            ->where('id', '>', $after)
+            ->exists();
+
+        if (!$hasNew) {
+            return response()->json(['messages' => []]);
+        }
+
+        // Seulement si nécessaire : requête complète avec sender
+        $messages = $conversation->messages()
+            ->with('sender:id,first_name,last_name,avatar')
+            ->where('id', '>', $after)
+            ->oldest()
+            ->get();
+
+        // Marquer les nouveaux messages reçus comme lus
+        $conversation->messages()
+            ->where('id', '>', $after)
+            ->where('sender_id', '!=', $user->id)
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        return response()->json(['messages' => $messages]);
     }
 }

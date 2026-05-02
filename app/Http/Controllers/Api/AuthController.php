@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password as PasswordBroker;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
@@ -102,7 +103,7 @@ class AuthController extends Controller
 
         $validated = $request->validate([
             'category_id' => ['required', 'exists:categories,id'],
-            'description' => ['nullable', 'string'],
+            'description' => ['nullable', 'string', 'max:2000'],
             'proof_document' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
             'proof_type' => ['required', 'in:diplome,certificat,preuve_experience'],
         ]);
@@ -174,6 +175,29 @@ class AuthController extends Controller
         ]);
     }
 
+    public function privacy(Request $request): JsonResponse
+    {
+        return response()->json([
+            'profile_visible' => (bool) $request->user()->profile_visible,
+        ]);
+    }
+
+    public function updatePrivacy(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'profile_visible' => ['required', 'boolean'],
+        ]);
+
+        $request->user()->update([
+            'profile_visible' => $validated['profile_visible'],
+        ]);
+
+        return response()->json([
+            'message' => 'Parametres de confidentialite mis a jour.',
+            'profile_visible' => (bool) $request->user()->fresh()->profile_visible,
+        ]);
+    }
+
     public function updateProfile(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -188,6 +212,9 @@ class AuthController extends Controller
         ]);
 
         if ($request->hasFile('avatar')) {
+            if ($user->avatar) {
+                Storage::disk('public')->delete($user->avatar);
+            }
             $validated['avatar'] = $request->file('avatar')->store('avatars', 'public');
         }
 

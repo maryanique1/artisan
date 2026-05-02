@@ -7,6 +7,7 @@ use App\Models\ArtisanProfile;
 use App\Models\SearchHistory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class ArtisanController extends Controller
 {
@@ -18,7 +19,7 @@ class ArtisanController extends Controller
     {
         $query = ArtisanProfile::with(['user:id,first_name,last_name,avatar,phone', 'category:id,name'])
             ->where('validation_status', 'approved')
-            ->whereHas('user', fn($q) => $q->where('is_active', true));
+            ->whereHas('user', fn($q) => $q->where('is_active', true)->where('profile_visible', true));
 
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->category_id);
@@ -49,11 +50,11 @@ class ArtisanController extends Controller
         // Enregistrer dans l'historique si utilisateur connecté + filtre
         if ($request->user() && ($request->filled('q') || $request->filled('category_id') || $request->filled('ville'))) {
             SearchHistory::create([
-                'user_id' => $request->user()->id,
-                'query' => $request->q,
+                'user_id'     => $request->user()->id,
+                'query'       => $request->q,
                 'category_id' => $request->category_id,
-                'ville' => $request->ville,
-                'quartier' => $request->quartier,
+                'ville'       => $request->ville,
+                'quartier'    => $request->quartier,
             ]);
         }
 
@@ -62,14 +63,24 @@ class ArtisanController extends Controller
 
     public function show(ArtisanProfile $artisanProfile, Request $request): JsonResponse
     {
+        // Respecter la préférence de confidentialité
+        if (!$artisanProfile->user?->profile_visible) {
+            return response()->json(['message' => 'Profil non disponible.'], 404);
+        }
+
         $artisanProfile->load([
-            'user:id,first_name,last_name,avatar,phone,email',
+            'user:id,first_name,last_name,avatar,phone',
             'category:id,name',
             'reviews.client:id,first_name,last_name,avatar',
             'publications' => fn($q) => $q->where('is_active', true)->latest()->limit(10),
         ]);
 
-        $artisanProfile->increment('views_count');
+        // Throttle views_count : 1 vue par IP et par profil toutes les heures
+        $cacheKey = 'view_' . $request->ip() . '_' . $artisanProfile->id;
+        if (!Cache::has($cacheKey)) {
+            $artisanProfile->increment('views_count');
+            Cache::put($cacheKey, true, now()->addHour());
+        }
 
         $isFavorited = false;
         if ($user = $request->user()) {
@@ -79,8 +90,8 @@ class ArtisanController extends Controller
         }
 
         return response()->json([
-            'artisan' => $artisanProfile,
-            'is_favorited' => $isFavorited,
+            'artisan'        => $artisanProfile,
+            'is_favorited'   => $isFavorited,
             'likes_received' => $artisanProfile->totalLikesReceived(),
         ]);
     }
@@ -129,20 +140,20 @@ class ArtisanController extends Controller
         return response()->json([
             'profile' => $profile->load('category'),
             'stats' => [
-                'views' => $profile->views_count,
-                'likes_received' => $profile->totalLikesReceived(),
-                'messages_unread' => $user->artisanConversations()
+                'views'             => $profile->views_count,
+                'likes_received'    => $profile->totalLikesReceived(),
+                'messages_unread'   => $user->artisanConversations()
                     ->withCount(['messages as u' => fn($q) => $q->where('is_read', false)->where('sender_id', '!=', $user->id)])
                     ->get()->sum('u'),
-                'reviews_count' => $profile->rating_count,
-                'rating_avg' => $profile->rating_avg,
+                'reviews_count'     => $profile->rating_count,
+                'rating_avg'        => $profile->rating_avg,
                 'publications_count' => $profile->publications()->count(),
             ],
             'deltas' => [
-                'reviews_this_week' => $reviewsThisWeek,
-                'reviews_delta' => $reviewsThisWeek - $reviewsLastWeek,
+                'reviews_this_week'    => $reviewsThisWeek,
+                'reviews_delta'        => $reviewsThisWeek - $reviewsLastWeek,
                 'publications_this_week' => $pubsThisWeek,
-                'publications_delta' => $pubsThisWeek - $pubsLastWeek,
+                'publications_delta'   => $pubsThisWeek - $pubsLastWeek,
             ],
         ]);
     }

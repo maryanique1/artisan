@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\PublicationController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\ReviewController;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -22,11 +23,11 @@ use Illuminate\Support\Facades\Route;
 // ══════════ Routes publiques ══════════════════════════════════
 
 // Auth
-Route::post('/register/client', [AuthController::class, 'registerClient']);
-Route::post('/register/artisan', [AuthController::class, 'registerArtisanStep1']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
-Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+Route::post('/register/client', [AuthController::class, 'registerClient'])->middleware('throttle:10,1');
+Route::post('/register/artisan', [AuthController::class, 'registerArtisanStep1'])->middleware('throttle:10,1');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:3,1');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:5,1');
 
 // Catégories (lecture publique — listes de filtres)
 Route::get('/categories', [CategoryController::class, 'index']);
@@ -42,6 +43,10 @@ Route::get('/publications/{publication}', [PublicationController::class, 'show']
 Route::get('/publications/{publication}/comments', [CommentController::class, 'index']);
 
 
+// ══════════ Broadcasting auth (Pusher / canaux privés) ══════════
+Route::post('/broadcasting/auth', fn(\Illuminate\Http\Request $r) => Broadcast::auth($r))
+    ->middleware('auth:sanctum');
+
 // ══════════ Routes authentifiées (Sanctum) ═════════════════════
 
 Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureUserIsActive::class])->group(function () {
@@ -50,6 +55,8 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureUserIsActive::clas
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/me', [AuthController::class, 'updateProfile']);
+    Route::get('/me/privacy', [AuthController::class, 'privacy']);
+    Route::put('/me/privacy', [AuthController::class, 'updatePrivacy']);
 
     // Push notifications (FCM)
     Route::post('/me/fcm-token', [AuthController::class, 'saveFcmToken']);
@@ -91,6 +98,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureUserIsActive::clas
     Route::get('/conversations/{conversation}', [ConversationController::class, 'show']);
     Route::post('/conversations', [ConversationController::class, 'startOrGet']);
     Route::post('/conversations/{conversation}/messages', [ConversationController::class, 'sendMessage']);
+    Route::get('/conversations/{conversation}/messages', [ConversationController::class, 'newMessages']);
 
     // ── Routes artisan uniquement ──────────────────────────────
     Route::middleware('artisan.role')->prefix('artisan')->group(function () {

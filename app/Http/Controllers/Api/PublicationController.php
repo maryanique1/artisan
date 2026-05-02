@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Events\NewNotification;
 use App\Events\PublicationLiked;
 use App\Http\Controllers\Controller;
 use App\Models\Publication;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class PublicationController extends Controller
 {
@@ -30,7 +30,6 @@ class PublicationController extends Controller
 
         $publications = $query->paginate(15);
 
-        // Ajouter liked_by_me
         if ($userId) {
             $ids = $publications->pluck('id');
             $likedIds = \App\Models\PublicationLike::where('user_id', $userId)
@@ -72,9 +71,9 @@ class PublicationController extends Controller
         }
 
         $validated = $request->validate([
-            'type' => ['required', 'in:text,image,video'],
+            'type'    => ['required', 'in:text,image,video'],
             'content' => ['required_if:type,text', 'nullable', 'string', 'max:2000'],
-            'media' => ['required_if:type,image,video', 'nullable', 'file', 'max:20480'],
+            'media'   => ['required_if:type,image,video', 'nullable', 'file', 'max:20480'],
         ]);
 
         $mediaUrl = null;
@@ -83,14 +82,14 @@ class PublicationController extends Controller
         }
 
         $publication = $profile->publications()->create([
-            'type' => $validated['type'],
-            'content' => $validated['content'] ?? null,
+            'type'      => $validated['type'],
+            'content'   => $validated['content'] ?? null,
             'media_url' => $mediaUrl,
             'is_active' => true,
         ]);
 
         return response()->json([
-            'message' => 'Publication créée.',
+            'message'     => 'Publication créée.',
             'publication' => $publication,
         ], 201);
     }
@@ -104,17 +103,21 @@ class PublicationController extends Controller
 
         $validated = $request->validate([
             'content' => ['sometimes', 'nullable', 'string', 'max:2000'],
-            'media' => ['sometimes', 'nullable', 'file', 'max:20480'],
+            'media'   => ['sometimes', 'nullable', 'file', 'max:20480'],
         ]);
 
         if ($request->hasFile('media')) {
+            // Supprimer l'ancien fichier avant de stocker le nouveau
+            if ($publication->media_url) {
+                Storage::disk('public')->delete($publication->media_url);
+            }
             $validated['media_url'] = $request->file('media')->store('publications', 'public');
         }
 
         $publication->update($validated);
 
         return response()->json([
-            'message' => 'Publication mise à jour.',
+            'message'     => 'Publication mise à jour.',
             'publication' => $publication->fresh(),
         ]);
     }
@@ -124,6 +127,10 @@ class PublicationController extends Controller
         $profile = $request->user()->artisanProfile;
         if (!$profile || $publication->artisan_profile_id !== $profile->id) {
             return response()->json(['message' => 'Non autorisé.'], 403);
+        }
+
+        if ($publication->media_url) {
+            Storage::disk('public')->delete($publication->media_url);
         }
 
         $publication->delete();
@@ -148,7 +155,7 @@ class PublicationController extends Controller
             $liked = false;
         } else {
             \App\Models\PublicationLike::create([
-                'user_id' => $userId,
+                'user_id'        => $userId,
                 'publication_id' => $publication->id,
             ]);
             $liked = true;
@@ -160,7 +167,7 @@ class PublicationController extends Controller
         broadcast(new PublicationLiked($publication, $request->user(), $liked))->toOthers();
 
         return response()->json([
-            'liked' => $liked,
+            'liked'       => $liked,
             'likes_count' => $publication->likes_count,
         ]);
     }
@@ -175,7 +182,6 @@ class PublicationController extends Controller
 
         return response()->json([
             'shares_count' => $publication->fresh()->shares_count,
-            'share_url' => url("/p/{$publication->id}"),
         ]);
     }
 
