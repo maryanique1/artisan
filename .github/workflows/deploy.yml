@@ -27,6 +27,12 @@ jobs:
             # Install/update PHP dependencies
             composer install --no-dev --optimize-autoloader --no-interaction
 
+            # Forcer BROADCAST_CONNECTION=log (reverb/pusher supprimés)
+            sed -i 's/BROADCAST_CONNECTION=.*/BROADCAST_CONNECTION=log/' .env
+
+            # Vider tous les caches avant de recréer (évite les 500 après suppression de classes)
+            php artisan optimize:clear
+
             # Laravel optimizations
             php artisan migrate --force
             php artisan config:cache
